@@ -1,4 +1,4 @@
 # trifektum-blog
 
-Repo for analyser gjort i forbiondelse med blogginnlegg på www.trifektum.no 
+Repo for analyser gjort i forbindelse med blogginnlegg på www.trifektum.no 
 
