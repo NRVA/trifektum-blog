@@ -85,5 +85,5 @@ dw.update_chart(
     language='nb-NO',
 )
 
-
-dw.publish_chart(chart_id) #publish
+# publish:
+dw.publish_chart(chart_id)
