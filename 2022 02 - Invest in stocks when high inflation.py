@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
-import chart_studio
-import chart_studio.plotly as py
+
 import plotly.graph_objects as go
 
 import config
