@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from datawrapper import Datawrapper
 
 import config
 
@@ -64,26 +63,4 @@ print(df)
 ############# GRAF #####################
 ########################################
 
-dw = Datawrapper(access_token = config.datawrapper_key)
 
-valuflation = dw.create_chart(title='Lav men positiv inflasjon gir høye aksjepriser',
-                                 folder_id = '93704',
-                                chart_type='d3-lines',
-                                data = df.reset_index())
-
-chart_id = config.dw_chart_ids['valuflation']
-
-# add sources
-dw.update_description(
-    chart_id,
-    source_name='Robert Shiller',
-    source_url='http://www.econ.yale.edu/~shiller/data.htm',
-    byline='www.trifektum.no')
-
-dw.update_chart(
-    chart_id,
-    language='nb-NO',
-)
-
-# publish:
-dw.publish_chart(chart_id)
