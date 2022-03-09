@@ -1,5 +1,8 @@
 import pandas as pd
 import numpy as np
+import chart_studio
+import chart_studio.plotly as py
+import plotly.graph_objects as go
 
 import config
 
@@ -63,4 +66,56 @@ print(df)
 ############# GRAF #####################
 ########################################
 
+cols = ["#4582ec", "#f0ad4e", "#02b875"]
+xs = plotdata.index/100
 
+fig = go.Figure()
+
+color_n = 0
+
+for c in dataofinterest:
+    fig.add_trace(go.Scatter(
+            x=xs, 
+            y=plotdata[c]["mean"],
+            mode='lines',
+            name = str(c),
+            line=dict(width=2, color=cols[color_n]),
+    ))
+    
+    color_n += 1
+    
+fig.update_layout(showlegend=False,
+                  xaxis=dict(title="Inflasjon (år-over-år)",
+                            showline=True,
+                            showgrid=False,
+                            showticklabels=True,
+                            tickformat= '%',
+                            #tickangle=-90,
+                            linecolor="rgba(150,150,150,0.8)",
+                            linewidth=1,
+                            ticks="outside",
+                            tickfont=dict(family="Arial", size=12, color="#6c757d"),
+                            titlefont=dict(family="Arial", size=12, color="rgb(150,150,150)"),),
+                  yaxis=dict(title="Gjennomsnittlig P/E10 og volatilitet",
+                             titlefont=dict(family="Arial", size=12, color="rgb(150,150,150)"),
+                            side="left",
+                             linewidth=1,
+                            linecolor="rgba(150,150,150,0.8)",
+                            showgrid=False,
+                            showticklabels=True,
+                            tickfont=dict(family="Arial", size=12, color="rgba(150,150,150,0.6)")),
+                  plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor='rgba(0, 0, 0, 0)',
+                  margin=dict(l=0, r=0, t=0, b=0),
+                  hovermode = "x"
+                 )
+
+fig.update_xaxes(showspikes=True, spikecolor="rgba(150,150,150,0.8)", spikesnap="cursor", spikemode="across"),
+fig.update_yaxes(showspikes=True, spikecolor="rgba(150,150,150,0.5)", spikethickness=2)
+
+
+fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide',
+                 spikedistance=1000, hoverdistance=100,
+                 )
+
+
+fig.show()
