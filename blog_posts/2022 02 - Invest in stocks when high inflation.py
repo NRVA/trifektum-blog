@@ -1,10 +1,12 @@
 import pandas as pd
 import numpy as np
+import os
+from fredapi import Fred
+import yfinance as yf
 
 import plotly.graph_objects as go
 
-import config
-
+FRED_API = os.environ['FRED-API-KEY']
 
 # Get online data from Robert Shiller here: http://www.econ.yale.edu/~shiller/data.htm
 # Visit my blog for more like this: www.trifektum.no
@@ -118,3 +120,24 @@ fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide',
 
 
 fig.show()
+
+
+
+########################################
+####### COMBINE CPI DATA AND S&P #######
+########################################
+
+# Get CPI data from Fred:
+
+fred = Fred(api_key=FRED_API)
+data = fred.get_series('CPALTT01USM659N') #https://fred.stlouisfed.org/series/CPALTT01USM659N
+cpi = pd.DataFrame(data).rename(columns={0:"CPI"}).dropna()
+cpi = cpi.reset_index().resample('M', on="index").last().bfill()[["CPI"]]/100
+
+# Get SP 500 data:
+spx = yf.download("^GSPC", group_by="ticker", period="max")["Adj Close"].reset_index().rename(columns={'Date': 'dato', "Adj Close": "SP500"})
+spx = spx.resample('M', on="dato").last()[["SP500"]]
+
+# Merge into df
+df = spx.merge(cpi, how="left", left_index=True, right_index=True)
+df["SP500_YoY"] = df.SP500.pct_change(12, freq="M")
