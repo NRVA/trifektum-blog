@@ -3,16 +3,17 @@ import chart_studio.plotly as py
 import chart_studio
 import numpy as np
 import pandas as pd
+import os
 from pandas.tseries.offsets import MonthEnd
 import plotly.graph_objects as go
 import plotly.express as px
 import datetime
 
 if int(datetime.datetime.now().strftime("%d")) == 15:
-    chart_studio.tools.set_credentials_file(username='oystein.nerva', api_key=os.environ['CHARTSTUDIO-KEY'])
+    chart_studio.tools.set_credentials_file(username=os.environ['CHARTSTUDIO-USER'], 
+                                            api_key=os.environ['CHARTSTUDIO-KEY'])
     chart_studio.tools.set_config_file(world_readable=True, sharing='public')
-    fred_token = os.environ['FRED-API-KEY']
-    fred = Fred(api_key=fred_token)
+    fred = Fred(api_key=os.environ['FRED-API-KEY'])
 
     df = fred.get_series('CPILFESL') #Consumer Price Index for All Urban Consumers: All Items Less Food and Energy in U.S. City Average
     df = df.reset_index().rename(columns={'index': 'dato', 0: "cpi"})
