@@ -1,4 +1,5 @@
 import requests
+import os
 
 def readDatabase(databseID, headers):
     readUrl = f"https://api.notion.com/v1/databases/{databseID}/query"
@@ -44,9 +45,11 @@ def updatePage(pageId, headers, p, d, y, y5, pb, pe, pr, dr):
 def StockData(ticker):
     url = "https://yahoo-finance97.p.rapidapi.com/stock-info"
     payload = f"symbol={ticker}"
+    rapidApi = os.environ["RAPIDAPI"]
+
     headers = {
         "content-type": "application/x-www-form-urlencoded",
-        "X-RapidAPI-Key": "24eac70d44mshf98db93dcf7ed14p1e430bjsn8a078a0b4d79",
+        "X-RapidAPI-Key": rapidApi,
         "X-RapidAPI-Host": "yahoo-finance97.p.rapidapi.com"
     }
     try:
