@@ -60,7 +60,7 @@ def drawdowns(window, dataframe, columnsname):
                                                       axis=1)
 
         print("Drawdowns calculated! Flink gutt!")
-        print(summarytable)
+        #print(summarytable)
 
         current = temp["start"].max().strftime("%B %Y")  # lagre merkelapp på nåværend korreksjon
         temp["start"] = temp["start"].dt.strftime("%B %Y")  # endre datofortmat så det blir lettere å lese

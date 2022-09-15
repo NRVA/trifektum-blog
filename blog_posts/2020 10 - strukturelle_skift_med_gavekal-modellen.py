@@ -9,91 +9,103 @@ import plotly.graph_objects as go
 import plotly.express as px
 import datetime
 
-if int(datetime.datetime.now().strftime("%d")) == 15:
+#if int(datetime.datetime.now().strftime("%d")) == 15:
+try:
     chart_studio.tools.set_credentials_file(username=os.environ['CHARTSTUDIO-USER'], 
                                             api_key=os.environ['CHARTSTUDIO-KEY'])
     chart_studio.tools.set_config_file(world_readable=True, sharing='public')
     fred = Fred(api_key=os.environ['FRED-API-KEY'])
 
-    df = fred.get_series('CPILFESL') #Consumer Price Index for All Urban Consumers: All Items Less Food and Energy in U.S. City Average
-    df = df.reset_index().rename(columns={'index': 'dato', 0: "cpi"})
-    latest_cpi = df["dato"].iloc[-1]
-    df["dato"] = df.dato + pd.DateOffset(months=2) + MonthEnd(1)
-    df["cpi"] = np.log(df["cpi"]/df["cpi"].shift(12))*100
-    df["6m_mean_cpi"] =  df["cpi"].rolling(6).mean()
-    df["10y_mean_cpi"] =  df["cpi"].rolling(12*10).mean()
+    df = fred.get_series_all_releases('CPILFESL') #Consumer Price Index for All Urban Consumers: All Items Less Food and Energy in U.S. City Average
+    latest_cpi = df["date"].iloc[-1]
+
+    df = df.set_index("realtime_start").resample("M").last().reset_index()
+    df["value"] = df["value"].pct_change(12)*100
+    df["6m_mean_cpi"] = df["value"].rolling(6).mean()
+    df["10y_mean_cpi"] = df["value"].rolling(12*10).mean()
     df["cpi_paradigme"] = np.where(df['6m_mean_cpi'] < df["10y_mean_cpi"], "avtagende", "aksellererende")
     df["Divergence (bp)_cpi"] = (df["6m_mean_cpi"]-df["10y_mean_cpi"])
 
     baa = fred.get_series('DBAA').reset_index().rename(columns={'index': 'dato', 0: "BAA yield"})
     baa = baa.set_index("dato").resample("M").last().reset_index()
 
-    df = df.merge(baa, how="left", on="dato")
+    df = pd.merge(df.assign(grouper=df['realtime_start'].dt.to_period('M')),
+                 baa.assign(grouper=baa['dato'].dt.to_period('M')),
+                 how='left', on='grouper')
     df["BAA real yield"] = df["BAA yield"] - df["10y_mean_cpi"]
     df["activity_paradigme"] = np.where(df['BAA real yield'] <= 5, "aksellererende", "avtagende")
-    df["month"] = df["dato"].dt.strftime("%B %Y")
+    df["month"] = df["date"].dt.strftime("%B %Y")
+    print("GaveKal model: datacollection OK!")
+except Exception as e:
+    print(f"GaveKal model: datacollection failed: {e}")
+
 
     ##########################################
     ################## MATRIX ################
     ##########################################
 
-    hover_data = {"activity_paradigme":True, "cpi_paradigme":True, "BAA real yield":False, "Divergence (bp)_cpi":False, "month":True}
+try:
+    hover_data = {"activity_paradigme": True, "cpi_paradigme": True, "BAA real yield": False,
+                      "Divergence (bp)_cpi": False, "month": True}
 
-    annot=[dict(x=7.5, y=2.5, xref="x", yref="y", text="TILTAGENDE INFLASJON<br>OG LAV AKTIVITET", xanchor="center", showarrow=False, font=dict(color="white", size=16,)),
-                dict(x=7.5, y=-2.5, xref="x", yref="y", text="AVTAGENDE INFLASJON<br>OG LAV AKTIVITET", xanchor="center", showarrow=False, font=dict(color="white", size=16)),
-                dict(x=2.5, y=2.5, xref="x", yref="y", text="TILTAGENDE INFLASJON<br>OG HØY AKTIVITET", xanchor="center", showarrow=False, font=dict(color="white", size=16)),
-                dict(x=2.5, y=-2.5, xref="x", yref="y", text="AVTAGENDE INFLASJON<br>OG HØY AKTIVITET", xanchor="center", showarrow=False, font=dict(color="white", size=16)),
-                dict(x=1, y=0, xref="paper", yref="paper", text="www.trifektum.no", xanchor="right", yanchor="bottom", align="right", showarrow=False, font=dict(color='rgba(122, 122, 122, 0.6)', size=10))]
-
+    annot = [
+            dict(x=7.5, y=2.5, xref="x", yref="y", text="TILTAGENDE INFLASJON<br>OG LAV AKTIVITET", xanchor="center",
+                 showarrow=False, font=dict(color="white", size=16, )),
+            dict(x=7.5, y=-2.5, xref="x", yref="y", text="AVTAGENDE INFLASJON<br>OG LAV AKTIVITET", xanchor="center",
+                 showarrow=False, font=dict(color="white", size=16)),
+            dict(x=2.5, y=2.5, xref="x", yref="y", text="TILTAGENDE INFLASJON<br>OG HØY AKTIVITET", xanchor="center",
+                 showarrow=False, font=dict(color="white", size=16)),
+            dict(x=2.5, y=-2.5, xref="x", yref="y", text="AVTAGENDE INFLASJON<br>OG HØY AKTIVITET", xanchor="center",
+                 showarrow=False, font=dict(color="white", size=16)),
+            dict(x=1, y=0, xref="paper", yref="paper", text="www.trifektum.no", xanchor="right", yanchor="bottom",
+                 align="right", showarrow=False, font=dict(color='rgba(122, 122, 122, 0.6)', size=10))]
 
     fig = px.scatter(df.tail(6), x="BAA real yield", y="Divergence (bp)_cpi",
-                    range_y=[-5,5], range_x=[10,0], width = 600, height=600,
-                    color_discrete_sequence=["#fc5661"],
-                    hover_data=hover_data, labels = {"activity_paradigme": "Økonomisk aktivitet", "cpi_paradigme": "Inflasjonspress", "month": "Dato"},
-                    title = "<b>Per " +df["dato"].iloc[-1].strftime("%B %Y") + " er USA i ett regime med "+df["cpi_paradigme"].iloc[-1]+" inflasjonspress <br>og med forholdene til rette for "+df["activity_paradigme"].iloc[-1]+ " økonomisk aktivitet",
-                    )
+                         # range_y=[-5,5], range_x=[10,0],
+                         width=600, height=600,
+                         color_discrete_sequence=["#fc5661"],
+                         hover_data=hover_data,
+                         labels={"activity_paradigme": "Økonomisk aktivitet", "cpi_paradigme": "Inflasjonspress",
+                                 "month": "Dato"},
+                         title="<b>Per " + df["dato"].iloc[-1].strftime("%B %Y") + " er USA i ett regime med " +
+                               df["cpi_paradigme"].iloc[-1] + " inflasjonspress <br>og med forholdene til rette for " +
+                               df["activity_paradigme"].iloc[-1] + " økonomisk aktivitet",
+                         )
 
     fig.update_traces(mode="lines",
-                     #hovertemplate='%{activity_paradigme}',
-                    line=dict(shape='spline'))
+                          # hovertemplate='%{activity_paradigme}',
+                          line=dict(shape='spline'))
 
     fig.add_trace(go.Scatter(x=list(df[['BAA real yield']].iloc[-1]),
-                                     y=list(df[['Divergence (bp)_cpi']].iloc[-1]),
-                                     mode='markers', hoverinfo="skip",
-                                     marker=dict(color='#fc5661', size=12, ), showlegend=False))
-
+                                 y=list(df[['Divergence (bp)_cpi']].iloc[-1]),
+                                 mode='markers', hoverinfo="skip",
+                                 marker=dict(color='#fc5661', size=12, ), showlegend=False))
 
     fig.update_layout(
-                shapes=[
-                    # dict(type="line", x0=20, x1=20, y0=-100, y1=100),
-                    # dict(type="line", x0=0, x1=100, y0=0, y1=0),
-                    dict(type="line",
-                         x0=10, y0=0,
-                         x1=0, y1=0,
-                         line=dict(color="white", width=10), layer='below',),
-                    dict(type="line",
-                         x0=5, y0=-10,
-                         x1=5, y1=10,
-                         line=dict(color="white", width=10), layer='below')],
-                margin=dict(l=0, r=0, t=90, b=0),
-                paper_bgcolor='rgba(0, 0, 0, 0)',
-                plot_bgcolor='rgba(122, 122, 122, 0.2)',
-                xaxis =  {'showgrid': False, 'zeroline': False, "showticklabels":False, "title":""},
-                yaxis =  {'showgrid': False, 'zeroline': False, "showticklabels":False, "title":""},
-                annotations=annot, separators=",", font_family="sans-serif",
-            )
+            margin=dict(l=0, r=0, t=90, b=0),
+            paper_bgcolor='rgba(0, 0, 0, 0)',
+            plot_bgcolor='rgba(122, 122, 122, 0.2)',
+            xaxis={'showgrid': False, 'zeroline': False, "showticklabels": False, "title": ""},
+            yaxis={'showgrid': False, 'zeroline': False, "showticklabels": False, "title": ""},
+            annotations=annot, separators=",", font_family="sans-serif",
+        )
 
-
-
+    fig.add_vline(x=5, line_width=10, line_color="white", layer='below', )
+    fig.add_hline(y=0, line_width=10, line_color="white", layer='below', )
     py.plot(fig, filename='investeringsmatrisen.html', auto_open=False, link=True)
+
+except Exception as e:
+    print(f"GaveKal model: investeringsmatrise failed: {e}")
+
 
     #############################################
     ################## INFLATION ################
     #############################################
 
-    fig = px.area(df, x="dato", y="cpi", color_discrete_sequence=["#fc5661"], range_x=[datetime.datetime(1958, 3, 1),df["dato"].iloc[-1]])
+try:
+    fig = px.area(df, x="dato", y="cpi", color_discrete_sequence=["#fc5661"], range_x=[datetime.datetime(1958, 3, 1),df["realtime_start"].iloc[-1]])
 
-    fig.add_trace(go.Scatter(x=df["dato"],
+    fig.add_trace(go.Scatter(x=df["realtime_start"],
                             y=df["10y_mean_cpi"],
                             mode='lines',
                             name="10 år gjennomsnitt",
@@ -177,8 +189,9 @@ if int(datetime.datetime.now().strftime("%d")) == 15:
             type="date"
         )
     )
+    print("inflation plot OK!")
+    #py.plot(fig, filename='investeringsmatrisen_inflasjon.html', auto_open=False, link=True)
 
-    py.plot(fig, filename='investeringsmatrisen_inflasjon.html', auto_open=False, link=True)
 
     ##########################################
     ################## GROWTH ################
@@ -224,5 +237,5 @@ if int(datetime.datetime.now().strftime("%d")) == 15:
 
     fig.update_layout(annotations=annotations)
     py.plot(fig, filename='investeringsmatrisen_aktivitet.html', auto_open=False, link=True)
-else:
-  print("ikke rett dato for oppdatering")
+except Exception as e:
+    print(e)
