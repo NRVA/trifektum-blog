@@ -30,7 +30,7 @@ def updatePage(pageId, headers, p, d, y, y5, pb, pe, pr, dr):
         "properties": {
             "Pris": p,
             "Utbytte": d,
-            "Yield":y,
+            "Yield": round(y,2),
             'Yield (MA5Y)': y5,
             "P/B": round(pb,2),
             "P/E": round(pe,2),
@@ -61,7 +61,7 @@ def StockData(ticker):
         return {
             "currentPrice":d["data"]["currentPrice"],
             "dividend":d["data"]["dividendRate"],
-            "dividendYield": round(d["data"]["dividendYield"], 2),
+            "dividendYield": d["data"]["dividendYield"],
             "fiveYearAvgDividendYield": d["data"]["fiveYearAvgDividendYield"] / 100 if d["data"]["fiveYearAvgDividendYield"] != None else None,
             "pb":d["data"]["priceToBook"],
             "fwdPE":d["data"]["forwardPE"],
