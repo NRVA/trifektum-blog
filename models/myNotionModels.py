@@ -61,7 +61,7 @@ def StockData(ticker):
         return {
             "currentPrice":d["data"]["currentPrice"],
             "dividend":d["data"]["dividendRate"],
-            "dividendYield": d["data"]["dividendYield"],
+            "dividendYield": round(d["data"]["dividendYield"], 2),
             "fiveYearAvgDividendYield": d["data"]["fiveYearAvgDividendYield"] / 100 if d["data"]["fiveYearAvgDividendYield"] != None else None,
             "pb":d["data"]["priceToBook"],
             "fwdPE":d["data"]["forwardPE"],
