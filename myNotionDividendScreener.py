@@ -35,7 +35,7 @@ for i in np.arange(len(notionDatabase["data"]["results"])):
                    y=d["dividendYield"],
                    y5=d["fiveYearAvgDividendYield"],
                    pb=d["pb"],
-                   pe=d["fwdPE"],
+                   pe=d["PE"],
                    pr=d["payoutRatio"],
                    dr=d["debtToMcap"]
                   )

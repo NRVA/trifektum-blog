@@ -30,7 +30,7 @@ def updatePage(pageId, headers, p, d, y, y5, pb, pe, pr, dr):
         "properties": {
             "Pris": p,
             "Utbytte": d,
-            "Yield": round(y,2),
+            "Yield": round(y,3),
             'Yield (MA5Y)': y5,
             "P/B": round(pb,2),
             "P/E": round(pe,2),
@@ -54,19 +54,21 @@ def StockData(ticker):
     }
     try:
         response = requests.request("POST", url, data=payload, headers=headers)
-
+        r_usdnok = requests.request("POST", url, data="symbol=NOK=X", headers=headers).json()   # Denne er ueffektiv som f. fiks en gang du orker!!!!
         d = response.json()
 
+        financialCurrency = d["data"]["financialCurrency"]
+        usdnok =r_usdnok["data"]["previousClose"]
 
         return {
             "currentPrice":d["data"]["currentPrice"],
             "dividend":d["data"]["dividendRate"],
             "dividendYield": d["data"]["dividendYield"],
             "fiveYearAvgDividendYield": d["data"]["fiveYearAvgDividendYield"] / 100 if d["data"]["fiveYearAvgDividendYield"] != None else None,
-            "pb":d["data"]["priceToBook"],
-            "fwdPE":d["data"]["forwardPE"],
+            "pb":d["data"]["priceToBook"] if financialCurrency=="NOK" else d["data"]["priceToBook"]/usdnok,
+            "PE":d["data"]["trailingPE"] if d["data"]["trailingPE"] != None else None,
             "payoutRatio":d["data"]["payoutRatio"],
             "debtToMcap":d["data"]["totalDebt"]/d["data"]["marketCap"],
         }
     except Exception as e:
-        print(f"StockData error: {e}")
+        print(f"StockData error {ticker}: {e}")
