@@ -1,5 +1,8 @@
 import requests
 import os
+import datetime
+from database import MongoDBPipeline
+
 
 def readDatabase(databseID, headers):
     readUrl = f"https://api.notion.com/v1/databases/{databseID}/query"
@@ -36,13 +39,31 @@ def updatePage(pageId, headers, p, d, y, y5, pb, pe, pr, dr):
             "P/E": round(pe,2),
             'Payout Ratio (%)': round(pr,1),
             'KcGe':round(dr,1),
-        }
+        },
     }
     response = requests.patch(updateUrl, json=updateData, headers=headers)
     print(response)
 
+def FXfetcher():
+    try:
+        url = "https://yahoo-finance97.p.rapidapi.com/stock-info"
+        rapidApi = os.environ["RAPIDAPI"]
 
-def StockData(ticker):
+        headers = {
+            "content-type": "application/x-www-form-urlencoded",
+            "X-RapidAPI-Key": rapidApi,
+            "X-RapidAPI-Host": "yahoo-finance97.p.rapidapi.com"
+        }
+
+        response = requests.request("POST", url, data="symbol=NOK=X", headers=headers)
+        data = response.json()
+        return data["data"]["previousClose"]
+    except Exception as e:
+        print(f"FXfetcher klarte ikke hente valutakurs: returnerer usdnok=10 som workaround!: {e}")
+        return 10
+
+
+def StockData(ticker, usdnok):
     url = "https://yahoo-finance97.p.rapidapi.com/stock-info"
     payload = f"symbol={ticker}"
     rapidApi = os.environ["RAPIDAPI"]
@@ -54,13 +75,13 @@ def StockData(ticker):
     }
     try:
         response = requests.request("POST", url, data=payload, headers=headers)
-        r_usdnok = requests.request("POST", url, data="symbol=NOK=X", headers=headers).json()   # Denne er ueffektiv som f. fiks en gang du orker!!!!
         d = response.json()
 
         financialCurrency = d["data"]["financialCurrency"]
-        usdnok =r_usdnok["data"]["previousClose"]
 
-        return {
+        mydataset = {
+            "date": datetime.datetime.today(),
+            "ticker":ticker,
             "currentPrice":d["data"]["currentPrice"],
             "dividend":d["data"]["dividendRate"],
             "dividendYield": d["data"]["dividendYield"],
@@ -70,5 +91,10 @@ def StockData(ticker):
             "payoutRatio":d["data"]["payoutRatio"],
             "debtToMcap":d["data"]["totalDebt"]/d["data"]["marketCap"],
         }
+
+        # Save to database
+        MongoDBPipeline().process_item(mydataset)
+
+        return mydataset
     except Exception as e:
         print(f"StockData error {ticker}: {e}")
