@@ -28,7 +28,7 @@ def updatePage(pageId, headers, p, d, y, y5, pb, pe, pr, dr):
     updateUrl = f"https://api.notion.com/v1/pages/{pageId}"
     updateData = {
         "properties": {
-            "Pris": p,
+            "Pris": round(p, 2),
             "Utbytte": d,
             "Yield": round(y,3),
             'Yield (MA5Y)': y5,
@@ -40,6 +40,7 @@ def updatePage(pageId, headers, p, d, y, y5, pb, pe, pr, dr):
     }
     response = requests.patch(updateUrl, json=updateData, headers=headers)
     print(response)
+
 
 def FXfetcher():
     try:
