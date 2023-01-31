@@ -41,8 +41,50 @@ def updatePage(pageId, headers, p, d, y, y5, pb, pe, pr, dr):
     response = requests.patch(updateUrl, json=updateData, headers=headers)
     print(response)
 
+def FXfetcher():
+    try:
+        url = "https://yahoo-finance97.p.rapidapi.com/price"
+        rapidApi = os.environ["RAPIDAPI"]
 
-def StockData(ticker):
+        headers = {
+            "content-type": "application/x-www-form-urlencoded",
+            "X-RapidAPI-Key": rapidApi,
+            "X-RapidAPI-Host": "yahoo-finance97.p.rapidapi.com"
+        }
+
+        payload = "symbol=NOK%3DX&period=1d"
+        response = requests.request("POST", url, data=payload, headers=headers)
+        data = response.json()
+        close = data["data"][0]["Close"]
+        print(close)
+        return close
+    except Exception as e:
+        print(f"FXfetcher klarte ikke hente valutakurs: returnerer usdnok=10 som workaround!: {e}")
+        return 10
+
+
+def StockQuote(ticker):
+    try:
+        url = "https://yahoo-finance97.p.rapidapi.com/price"
+        rapidApi = os.environ["RAPIDAPI"]
+
+        payload = f"symbol={ticker}&period=1d"
+        headers = {
+            "content-type": "application/x-www-form-urlencoded",
+            "X-RapidAPI-Key": rapidApi,
+            "X-RapidAPI-Host": "yahoo-finance97.p.rapidapi.com"
+        }
+
+        response = requests.request("POST", url, data=payload, headers=headers)
+        data = response.json()
+        quote = data["data"][0]["Close"]
+        return quote
+    except Exception as e:
+        print(f"StockQuote klarte ikke hente aksjeprisen: {e}")
+        return None
+
+
+def StockData(ticker, usdnok):
     url = "https://yahoo-finance97.p.rapidapi.com/stock-info"
     payload = f"symbol={ticker}"
     rapidApi = os.environ["RAPIDAPI"]
@@ -54,21 +96,25 @@ def StockData(ticker):
     }
     try:
         response = requests.request("POST", url, data=payload, headers=headers)
-        r_usdnok = requests.request("POST", url, data="symbol=NOK=X", headers=headers).json()   # Denne er ueffektiv som f. fiks en gang du orker!!!!
         d = response.json()
 
         financialCurrency = d["data"]["financialCurrency"]
-        usdnok =r_usdnok["data"]["previousClose"]
+        quote = StockQuote(ticker)
+        mcap = d["data"]["sharesOutstanding"]*quote
 
-        return {
-            "currentPrice":d["data"]["currentPrice"],
+        mydataset = {
+            "ticker":ticker,
+            "currentPrice": quote,
+            "grossMargins":d["data"]["grossMargins"],
             "dividend":d["data"]["dividendRate"],
             "dividendYield": d["data"]["dividendYield"],
             "fiveYearAvgDividendYield": d["data"]["fiveYearAvgDividendYield"] / 100 if d["data"]["fiveYearAvgDividendYield"] != None else None,
             "pb":d["data"]["priceToBook"] if financialCurrency=="NOK" else d["data"]["priceToBook"]/usdnok,
             "PE":d["data"]["trailingPE"] if d["data"]["trailingPE"] != None else None,
             "payoutRatio":d["data"]["payoutRatio"],
-            "debtToMcap":d["data"]["totalDebt"]/d["data"]["marketCap"],
+            "debtToMcap":d["data"]["totalDebt"]/mcap,
         }
+
+        return mydataset
     except Exception as e:
         print(f"StockData error {ticker}: {e}")

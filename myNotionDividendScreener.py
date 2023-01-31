@@ -1,12 +1,13 @@
 import numpy as np
 import os
-from models.myNotionModels import readDatabase, getPageTitle, StockData, updatePage
+from models.myNotionModels import readDatabase, getPageTitle, StockData, updatePage, FXfetcher
 
 #My medium article: https://medium.datadriveninvestor.com/creating-an-automated-stock-screener-in-notion-with-python-43df78293bb4
 #stockapi: https://rapidapi.com/asepscareer/api/yahoo-finance97/
 
 token = os.environ['NOTION-DIVIDEND-SCREENER']
 databseID = os.environ["NOTION-DIVIDEND-DB-ID"]
+usdnok = FXfetcher()
 
 
 headers = {
@@ -26,7 +27,7 @@ for i in np.arange(len(notionDatabase["data"]["results"])):
         pageTitle = getPageTitle(pageId, headers)
 
         # get data from Yahoo Finance:
-        d = StockData(pageTitle)
+        d = StockData(pageTitle, usdnok)
 
         #update Notion database:
         updatePage(pageId, headers,
@@ -37,7 +38,8 @@ for i in np.arange(len(notionDatabase["data"]["results"])):
                    pb=d["pb"],
                    pe=d["PE"],
                    pr=d["payoutRatio"],
-                   dr=d["debtToMcap"]
+                   dr=d["debtToMcap"],
+                   #grossMargins=d["grossMargins"]
                   )
 
     except Exception as e:
