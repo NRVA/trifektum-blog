@@ -107,7 +107,7 @@ def get_stock_data_yfinance(ticker, usdnok):
         'dividend': dividend,
         'dividendYield': dividend_yield,
         'fiveYearAvgDividendYield': avg_dividend_yield_5y,
-        'pb': pb if financialCurrency=="NOK" else pb/usdnok,,
+        'pb': pb if financialCurrency=="NOK" else pb/usdnok,
         'PE': trailing_pe if trailing_pe != None else None,
         'payoutRatio': payout_ratio,
         'debtToMcap': total_debt
