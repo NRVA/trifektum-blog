@@ -102,12 +102,13 @@ def StockData(ticker, usdnok):
             response = requests.request("POST", url, data=payload, headers=headers)
             d = response.json()
 
+            quote = d["data"]["currentPrice"]
             financialCurrency = d["data"]["financialCurrency"]
             mcap = d["data"]["sharesOutstanding"]*quote
 
             mydataset = {
                 "ticker":ticker,
-                "currentPrice": d["data"]["currentPrice"],
+                "currentPrice": quote,
                 "grossMargins":d["data"]["grossMargins"],
                 "dividend":d["data"]["dividendRate"],
                 "dividendYield": d["data"]["dividendYield"],
