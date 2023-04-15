@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import os
 from models.myNotionModels import readDatabase, getPageTitle, StockData, updatePage, FXfetcher
@@ -21,6 +22,7 @@ notionDatabase = readDatabase(databseID, headers)
 
 
 for i in np.arange(len(notionDatabase["data"]["results"])):
+    time.sleep(3)
     try:
         #get pages (rows) in datbase:
         pageId = notionDatabase["data"]["results"][i]["id"]
@@ -41,6 +43,7 @@ for i in np.arange(len(notionDatabase["data"]["results"])):
                    dr=d["debtToMcap"],
                    #grossMargins=d["grossMargins"]
                   )
+        print(f"{pageTitle} ok, price: {d['currentPrice']}")
 
     except Exception as e:
         print(e)
