@@ -1,6 +1,5 @@
 import requests
 import os
-import yfinance as yf
 
 def readDatabase(databseID, headers):
     readUrl = f"https://api.notion.com/v1/databases/{databseID}/query"
@@ -124,4 +123,3 @@ def StockData(ticker, usdnok):
             print(f"StockData error: API not working: {ticker}: {e}")
     except Exception as e:
         print(f"StockData error {ticker}: {e}")
-        get_stock_data_yfinance(ticker, usdnok)
