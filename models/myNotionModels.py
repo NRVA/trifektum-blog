@@ -122,7 +122,6 @@ def StockData(ticker, usdnok):
             return mydataset
         except Exception as e:
             print(f"StockData error: API not working: {ticker}: {e}")
-            get_stock_data_yfinance(ticker, usdnok)
     except Exception as e:
         print(f"StockData error {ticker}: {e}")
         get_stock_data_yfinance(ticker, usdnok)
