@@ -1,6 +1,5 @@
 import requests
 import os
-import yfinance as yf
 
 def readDatabase(databseID, headers):
     readUrl = f"https://api.notion.com/v1/databases/{databseID}/query"
@@ -84,35 +83,6 @@ def StockQuote(ticker):
     except Exception as e:
         print(f"StockQuote klarte ikke hente aksjeprisen: {e}")
         return None
-
-def get_stock_data_yfinance(ticker, usdnok):
-    #alternative to fastAPI
-    stock = yf.Ticker(ticker)
-    info = stock.info
-
-    current_price = info['regularMarketPrice']
-    gross_margin = info['grossMargins']
-    dividend = info['dividendRate']
-    dividend_yield = info['dividendYield']
-    avg_dividend_yield_5y = info['fiveYearAvgDividendYield']
-    pb = info['priceToBook']
-    trailing_pe = info['trailingPE']
-    payout_ratio = info['payoutRatio']
-    total_debt = info['totalDebt']
-    mcap = info["sharesOutstanding"]*current_price
-
-    return {
-        'currentPrice': current_price,
-        'grossMargins': gross_margin,
-        'dividend': dividend,
-        'dividendYield': dividend_yield,
-        'fiveYearAvgDividendYield': avg_dividend_yield_5y,
-        'pb': pb if financialCurrency=="NOK" else pb/usdnok,,
-        'PE': trailing_pe if trailing_pe != None else None,
-        'payoutRatio': payout_ratio,
-        'debtToMcap': total_debt
-    }
-    
     
 def StockData(ticker, usdnok):
     try:
@@ -149,7 +119,6 @@ def StockData(ticker, usdnok):
             return mydataset
         except Exception as e:
             print(f"StockData error: API not working: {ticker}: {e}")
-            get_stock_data_yfinance(ticker, usdnok)
     except Exception as e:
         print(f"StockData error {ticker}: {e}")
         get_stock_data_yfinance(ticker, usdnok)
