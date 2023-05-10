@@ -24,7 +24,7 @@ def getPageTitle(pageId, headers):
         print(f"getPageTitle error: {e}: {propUrl}")
 
 
-def updatePage(pageId, headers, p, d, y, y5, pb, pe, pr, dr):
+def updatePage(pageId, headers, p, d, y, y5, pb, pe, pr, dr, roc):
     updateUrl = f"https://api.notion.com/v1/pages/{pageId}"
     updateData = {
         "properties": {
@@ -36,6 +36,7 @@ def updatePage(pageId, headers, p, d, y, y5, pb, pe, pr, dr):
             "P/E": round(pe,2),
             'Payout Ratio (%)': round(pr,1),
             'KcGe':round(dr,1),
+            'ROC':roc
         }
     }
     response = requests.patch(updateUrl, json=updateData, headers=headers)
@@ -63,7 +64,7 @@ def FXfetcher():
         print(f"FXfetcher klarte ikke hente valutakurs: returnerer usdnok=10 som workaround!: {e}")
         return 10
 
-"""
+
 def StockQuote(ticker):
     try:
         url = "https://yahoo-finance97.p.rapidapi.com/price"
@@ -83,34 +84,6 @@ def StockQuote(ticker):
     except Exception as e:
         print(f"StockQuote klarte ikke hente aksjeprisen: {e}")
         return None
-
-def get_stock_data_yfinance(ticker, usdnok):
-    #alternative to fastAPI
-    stock = yf.Ticker(ticker)
-    info = stock.info
-
-    current_price = info['regularMarketPrice']
-    gross_margin = info['grossMargins']
-    dividend = info['dividendRate']
-    dividend_yield = info['dividendYield']
-    avg_dividend_yield_5y = info['fiveYearAvgDividendYield']
-    pb = info['priceToBook']
-    trailing_pe = info['trailingPE']
-    payout_ratio = info['payoutRatio']
-    total_debt = info['totalDebt']
-    mcap = info["sharesOutstanding"]*current_price
-
-    return {
-        'currentPrice': current_price,
-        'grossMargins': gross_margin,
-        'dividend': dividend,
-        'dividendYield': dividend_yield,
-        'fiveYearAvgDividendYield': avg_dividend_yield_5y,
-        'pb': pb if financialCurrency=="NOK" else pb/usdnok,,
-        'PE': trailing_pe if trailing_pe != None else None,
-        'payoutRatio': payout_ratio,
-        'debtToMcap': total_debt
-    }
     
     
 def StockData(ticker, usdnok):
@@ -143,12 +116,11 @@ def StockData(ticker, usdnok):
                 "dividendYield": d["data"].get("dividendYield", None),
                 "fiveYearAvgDividendYield": dividend_yield / 100 if dividend_yield is not None else None, 
                 "pb":d["data"].get("priceToBook", None) if financialCurrency=="NOK" else d["data"].get("priceToBook", None)/usdnok, 
-                "PE":d["data"].get("trailingPE", None)
+                "PE":d["data"].get("trailingPE", None),
                 "payoutRatio":d["data"].get("payoutRatio", None), 
-                "debtToMcap":d["data"].get("totalDebt", None), 
+                "debtToMcap":d["data"].get("totalDebt", None) / mcap if d["data"].get("totalDebt", None) is not None else None, 
                 "ROC":ROE * (1-debtToEquity/100) if ROE is not None else None, 
             }
-
             return mydataset
         except Exception as e:
             print(f"StockData error: API not working: {ticker}: {e}")

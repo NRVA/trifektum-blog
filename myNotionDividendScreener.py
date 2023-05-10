@@ -41,9 +41,9 @@ for i in np.arange(len(notionDatabase["data"]["results"])):
                    pe=d["PE"],
                    pr=d["payoutRatio"],
                    dr=d["debtToMcap"],
-                   #grossMargins=d["grossMargins"]
+                   roc=d["ROC"],
                   )
-        print(f"{pageTitle} ok, price: {d['currentPrice']}")
+        print(f"{pageTitle} ok, price: {d['currentPrice']}, ROC: {d["ROC"]}")
 
     except Exception as e:
         print(e)
