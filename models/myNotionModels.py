@@ -63,7 +63,7 @@ def FXfetcher():
         print(f"FXfetcher klarte ikke hente valutakurs: returnerer usdnok=10 som workaround!: {e}")
         return 10
 
-
+"""
 def StockQuote(ticker):
     try:
         url = "https://yahoo-finance97.p.rapidapi.com/price"
@@ -83,6 +83,35 @@ def StockQuote(ticker):
     except Exception as e:
         print(f"StockQuote klarte ikke hente aksjeprisen: {e}")
         return None
+
+def get_stock_data_yfinance(ticker, usdnok):
+    #alternative to fastAPI
+    stock = yf.Ticker(ticker)
+    info = stock.info
+
+    current_price = info['regularMarketPrice']
+    gross_margin = info['grossMargins']
+    dividend = info['dividendRate']
+    dividend_yield = info['dividendYield']
+    avg_dividend_yield_5y = info['fiveYearAvgDividendYield']
+    pb = info['priceToBook']
+    trailing_pe = info['trailingPE']
+    payout_ratio = info['payoutRatio']
+    total_debt = info['totalDebt']
+    mcap = info["sharesOutstanding"]*current_price
+
+    return {
+        'currentPrice': current_price,
+        'grossMargins': gross_margin,
+        'dividend': dividend,
+        'dividendYield': dividend_yield,
+        'fiveYearAvgDividendYield': avg_dividend_yield_5y,
+        'pb': pb if financialCurrency=="NOK" else pb/usdnok,,
+        'PE': trailing_pe if trailing_pe != None else None,
+        'payoutRatio': payout_ratio,
+        'debtToMcap': total_debt
+    }
+    
     
 def StockData(ticker, usdnok):
     try:
@@ -99,21 +128,25 @@ def StockData(ticker, usdnok):
             response = requests.request("POST", url, data=payload, headers=headers)
             d = response.json()
 
+            quote = d["data"].get("currentPrice", None)
             financialCurrency = d["data"]["financialCurrency"]
-            quote = StockQuote(ticker)
+            avgyield = d["data"].get("fiveYearAvgDividendYield", None)
             mcap = d["data"]["sharesOutstanding"]*quote
+            ROE = d["data"].get("returnOnEquity", None)
+            debtToEquity = d["data"].get("debtToEquity", None)
 
             mydataset = {
                 "ticker":ticker,
                 "currentPrice": quote,
-                "grossMargins":d["data"]["grossMargins"],
-                "dividend":d["data"]["dividendRate"],
-                "dividendYield": d["data"]["dividendYield"],
-                "fiveYearAvgDividendYield": d["data"]["fiveYearAvgDividendYield"] / 100 if d["data"]["fiveYearAvgDividendYield"] != None else None,
-                "pb":d["data"]["priceToBook"] if financialCurrency=="NOK" else d["data"]["priceToBook"]/usdnok,
-                "PE":d["data"]["trailingPE"] if d["data"]["trailingPE"] != None else None,
-                "payoutRatio":d["data"]["payoutRatio"],
-                "debtToMcap":d["data"]["totalDebt"]/mcap,
+                "grossMargins":d["data"].get("grossMargins", None),
+                "dividend":d["data"].get("dividendRate", None),
+                "dividendYield": d["data"].get("dividendYield", None),
+                "fiveYearAvgDividendYield": dividend_yield / 100 if dividend_yield is not None else None, 
+                "pb":d["data"].get("priceToBook", None) if financialCurrency=="NOK" else d["data"].get("priceToBook", None)/usdnok, 
+                "PE":d["data"].get("trailingPE", None)
+                "payoutRatio":d["data"].get("payoutRatio", None), 
+                "debtToMcap":d["data"].get("totalDebt", None), 
+                "ROC":ROE * (1-debtToEquity/100) if ROE is not None else None, 
             }
 
             return mydataset
@@ -121,4 +154,3 @@ def StockData(ticker, usdnok):
             print(f"StockData error: API not working: {ticker}: {e}")
     except Exception as e:
         print(f"StockData error {ticker}: {e}")
-        get_stock_data_yfinance(ticker, usdnok)
