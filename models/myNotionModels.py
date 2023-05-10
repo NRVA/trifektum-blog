@@ -101,21 +101,25 @@ def StockData(ticker, usdnok):
             response = requests.request("POST", url, data=payload, headers=headers)
             d = response.json()
 
-            quote = d["data"]["currentPrice"]
+            quote = d["data"].get("currentPrice", None)
             financialCurrency = d["data"]["financialCurrency"]
+            avgyield = d["data"].get("fiveYearAvgDividendYield", None)
             mcap = d["data"]["sharesOutstanding"]*quote
+            ROE = d["data"].get("returnOnEquity", None)
+            debtToEquity = d["data"].get("debtToEquity", None)
 
             mydataset = {
                 "ticker":ticker,
                 "currentPrice": quote,
-                "grossMargins":d["data"]["grossMargins"],
-                "dividend":d["data"]["dividendRate"],
-                "dividendYield": d["data"]["dividendYield"],
-                "fiveYearAvgDividendYield": d["data"]["fiveYearAvgDividendYield"] / 100 if d["data"]["fiveYearAvgDividendYield"] != None else None,
-                "pb":d["data"]["priceToBook"] if financialCurrency=="NOK" else d["data"]["priceToBook"]/usdnok,
-                "PE":d["data"]["trailingPE"] if d["data"]["trailingPE"] != None else None,
-                "payoutRatio":d["data"]["payoutRatio"],
-                "debtToMcap":d["data"]["totalDebt"]/mcap,
+                "grossMargins":d["data"].get("grossMargins", None),
+                "dividend":d["data"].get("dividendRate", None),
+                "dividendYield": d["data"].get("dividendYield", None),
+                "fiveYearAvgDividendYield": dividend_yield / 100 if dividend_yield is not None else None, 
+                "pb":d["data"].get("priceToBook", None) if financialCurrency=="NOK" else d["data"].get("priceToBook", None)/usdnok, 
+                "PE":d["data"].get("trailingPE", None)
+                "payoutRatio":d["data"].get("payoutRatio", None), 
+                "debtToMcap":d["data"].get("totalDebt", None), 
+                "ROC":ROE * (1-debtToEquity/100) if ROE is not None else None, 
             }
 
             return mydataset
