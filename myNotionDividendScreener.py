@@ -22,7 +22,7 @@ notionDatabase = readDatabase(databseID, headers)
 
 
 for i in np.arange(len(notionDatabase["data"]["results"])):
-    time.sleep(3)
+    time.sleep(1)
     try:
         #get pages (rows) in datbase:
         pageId = notionDatabase["data"]["results"][i]["id"]
@@ -41,7 +41,7 @@ for i in np.arange(len(notionDatabase["data"]["results"])):
                    pe=d["PE"],
                    pr=d["payoutRatio"],
                    dr=d["debtToMcap"],
-                   #grossMargins=d["grossMargins"]
+                   roc=d["ROC"],
                   )
         print(f"{pageTitle} ok, price: {d['currentPrice']}")
 
