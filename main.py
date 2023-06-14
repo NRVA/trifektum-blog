@@ -1,5 +1,8 @@
 import importlib
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv() 
 
 weekdaynum = datetime.today().weekday()
 
@@ -11,6 +14,6 @@ notion_dividendscreener = importlib.import_module("myNotionDividendScreener") if
 
 
 if __name__ == '__main__':
-    korreksjon_i_aksjemarkedene
+    #korreksjon_i_aksjemarkedene
     notion_dividendscreener
     #gavekal_model
